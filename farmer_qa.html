@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ed">
+  <title>Fieldnote | Farmer Q&amp;A</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Fieldnote home">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span>fieldnote<span class="brand-period">.</span></span>
+      </a>
+      <div class="topbar-meta">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span>GROWER'S DESK</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow"><span>01</span> A LITTLE KNOW-HOW, WHEN YOU NEED IT</p>
+        <h1 id="page-title">Ask what’s<br><em>growing on.</em></h1>
+        <p class="intro-copy">Practical answers for the questions that come up in the field. Start with a crop, a symptom, or whatever’s on your mind.</p>
+        <div class="intro-rule"><span></span><span>FIELD NOTES / NO. 001</span></div>
+      </section>
+
+      <section class="workspace" aria-label="Farmer question and answer">
+        <div class="ask-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">YOUR QUESTION</p>
+              <h2>What can we help with?</h2>
+            </div>
+            <span class="panel-index">01 / 02</span>
+          </div>
+
+          <form id="question-form">
+            <label class="visually-hidden" for="question">Type your farming question</label>
+            <textarea id="question" name="question" rows="3" maxlength="300" placeholder="e.g. How often should I water tomato plants?" required></textarea>
+            <div class="form-footer">
+              <span class="input-hint">Be as specific as you like.</span>
+              <button class="submit-button" type="submit">
+                <span>Ask Fieldnote</span><span class="button-arrow" aria-hidden="true">↗</span>
+              </button>
+            </div>
+          </form>
+
+          <div class="suggestions" aria-label="Suggested questions">
+            <span class="suggestions-label">TRY ASKING</span>
+            <button type="button" class="suggestion" data-question="How often should I water tomato plants?">Tomato watering</button>
+            <button type="button" class="suggestion" data-question="What causes yellow leaves on plants?">Yellow leaves</button>
+            <button type="button" class="suggestion" data-question="How can I control weeds in maize?">Weeds in maize</button>
+            <button type="button" class="suggestion" data-question="How can I improve soil health?">Soil health</button>
+            <button type="button" class="suggestion" data-question="How do I make compost?">Make compost</button>
+            <button type="button" class="suggestion" data-question="What is crop rotation and why use it?">Crop rotation</button>
+          </div>
+
+          <div class="answer" id="answer" aria-live="polite" hidden>
+            <div class="answer-topline">
+              <span class="answer-label"><span class="answer-spark" aria-hidden="true">✳</span> FIELDNOTE SAYS</span>
+              <span class="match-label" id="match-label"></span>
+            </div>
+            <p class="answer-question" id="answer-question"></p>
+            <p class="answer-copy" id="answer-copy"></p>
+            <p class="answer-footnote">For local rates and conditions, check with your agricultural extension service.</p>
+          </div>
+          <p class="form-status" id="form-status" role="status"></p>
+        </div>
+
+        <aside class="side-notes" aria-label="Fieldnote information">
+          <div class="side-note note-green">
+            <p class="eyebrow">IN THE FIELD</p>
+            <div class="sun-mark" aria-hidden="true">✳</div>
+            <h2>Start with what you can see.</h2>
+            <p>A close look at the plant, soil, and weather is often the first clue to a better answer.</p>
+            <span class="note-number">FIELD TIP&nbsp;&nbsp; / &nbsp;&nbsp;01</span>
+          </div>
+          <div class="side-note note-cream">
+            <p class="eyebrow">A GOOD REMINDER</p>
+            <p class="reminder-quote">“Healthy soil is the beginning of a healthy crop.”</p>
+            <span class="note-number">GROW WELL, EVERY DAY</span>
+          </div>
+          <div class="side-footer"><span>GROUNDED IN GOOD QUESTIONS</span><span>↗</span></div>
+        </aside>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>FIELDNOTE <span class="brand-period">/</span> FARMER Q&amp;A</span>
+      <span>Thoughtful guidance. Rooted in your own good judgment.</span>
+    </footer>
+  </div>
+
+  <script>
+    const form = document.querySelector("#question-form");
+    const questionInput = document.querySelector("#question");
+    const answerPanel = document.querySelector("#answer");
+    const status = document.querySelector("#form-status");
+    const submitButton = form.querySelector("button[type='submit']");
+
+    document.querySelectorAll(".suggestion").forEach((button) => {
+      button.addEventListener("click", () => {
+        questionInput.value = button.dataset.question;
+        questionInput.focus();
+      });
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const question = questionInput.value.trim();
+      if (!question) return;
+
+      submitButton.disabled = true;
+      submitButton.querySelector("span:first-child").textContent = "Thinking…";
+      status.textContent = "Finding a useful answer…";
+      answerPanel.hidden = true;
+
+      try {
+        const response = await fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || "That question could not be sent.");
+
+        const match = result.answer.match(/\n\(Match confidence: ([0-9.]+)\)$/);
+        document.querySelector("#answer-question").textContent = question;
+        document.querySelector("#answer-copy").textContent = match
+          ? result.answer.replace(/\n\(Match confidence: [0-9.]+\)$/, "")
+          : result.answer;
+        document.querySelector("#match-label").textContent = match
+          ? `QUESTION MATCH · ${Math.round(Number(match[1]) * 100)}%`
+          : "A PLACE TO START";
+        answerPanel.hidden = false;
+        status.textContent = "";
+      } catch (error) {
+        status.textContent = error.message || "We couldn’t reach the answer service. Try again.";
+      } finally {
+        submitButton.disabled = false;
+        submitButton.querySelector("span:first-child").textContent = "Ask Fieldnote";
+      }
+    });
+  </script>
+</body>
+</html>
